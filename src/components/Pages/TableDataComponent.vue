@@ -25,7 +25,7 @@
             type="date"
             v-model="filters.startDate"
             @change="applyFilters"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-1"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
           />
         </div>
         <div>
@@ -34,7 +34,16 @@
             type="date"
             v-model="filters.endDate"
             @change="applyFilters"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-1"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Summary Date</label>
+          <input
+            type="date"
+            v-model="filters.summaryDate"
+            @change="applyFilters"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
           />
         </div>
       </div>
@@ -45,7 +54,7 @@
         <select
           v-model="filters.paybill"
           @change="applyFilters"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 p-1"
+          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
         >
           <option value="">All Paybills</option>
           <option v-for="paybill in uniquePaybills" :key="paybill" :value="paybill">
@@ -148,6 +157,40 @@
         </button>
       </div>
     </div>
+
+    <!-- Daily Summary Table -->
+    <div class="mt-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Daily Summary for {{ filters.summaryDate || 'Selected Date' }}</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deposit Count</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deposit Amount</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Withdrawal Count</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Withdrawal Amount</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net Cash</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr v-if="filters.summaryDate">
+              <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(filters.summaryDate) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ dailyDepositCount }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-green-600">{{ dailyDepositAmount }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{ dailyWithdrawalCount }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-red-600">{{ dailyWithdrawalAmount }}</td>
+              <td class="px-6 py-4 whitespace-nowrap" :class="dailyNetCash >= 0 ? 'text-green-600' : 'text-red-600'">
+                {{ dailyNetCash }}
+              </td>
+            </tr>
+            <tr v-else>
+              <td colspan="6" class="px-6 py-4 text-center text-gray-500">Select a date to view summary</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -162,6 +205,7 @@ export default {
         startDate: '',
         endDate: '',
         paybill: '',
+        summaryDate: '', // New filter for summary table date
       },
       searchQuery: '',
       searchField: 'mobile',
@@ -177,11 +221,11 @@ export default {
         { id: 7, mobile: '0778901234', amount: 800, date: '2025-06-07', paybill: '123456', type: 'Deposit' },
         { id: 8, mobile: '0789012345', amount: 1200, date: '2025-06-08', paybill: '456789', type: 'Withdrawal' },
         { id: 9, mobile: '0790123456', amount: 600, date: '2025-06-09', paybill: '789012', type: 'Deposit' },
-        { id: 10, mobile: '0701234567', amount: 900, date: '2025-06-10', paybill: '123456', type: 'Withdrawal' },
-        { id: 11, mobile: '0712345678', amount: 1100, date: '2025-06-11', paybill: '456789', type: 'Deposit' },
-        { id: 12, mobile: '0723456789', amount: 400, date: '2025-06-12', paybill: '789012', type: 'Withdrawal' },
-        { id: 13, mobile: '0734567890', amount: 700, date: '2025-06-13', paybill: '123456', type: 'Deposit' },
-        { id: 14, mobile: '0745678901', amount: 1300, date: '2025-06-14', paybill: '456789', type: 'Withdrawal' },
+        { id: 10, mobile: '0701234567', amount: 900, date: '2025-06-09', paybill: '123456', type: 'Withdrawal' },
+        { id: 11, mobile: '0712345678', amount: 1100, date: '2025-06-09', paybill: '456789', type: 'Deposit' },
+        { id: 12, mobile: '0723456789', amount: 400, date: '2025-06-09', paybill: '789012', type: 'Withdrawal' },
+        { id: 13, mobile: '0734567890', amount: 700, date: '2025-06-09', paybill: '123456', type: 'Deposit' },
+        { id: 14, mobile: '0745678901', amount: 1300, date: '2025-06-09', paybill: '456789', type: 'Withdrawal' },
         { id: 15, mobile: '0756789012', amount: 2000, date: '2025-06-15', paybill: '789012', type: 'Deposit' },
         { id: 16, mobile: '0767890123', amount: 500, date: '2025-06-16', paybill: '123456', type: 'Withdrawal' },
         { id: 17, mobile: '0778901234', amount: 950, date: '2025-06-17', paybill: '456789', type: 'Deposit' },
@@ -248,6 +292,33 @@ export default {
     withdrawalCount() {
       return this.filteredTransactions.filter(t => t.type === 'Withdrawal').length;
     },
+    dailyDepositCount() {
+      if (!this.filters.summaryDate) return 0;
+      return this.transactions
+        .filter(t => t.date === this.filters.summaryDate && t.type === 'Deposit')
+        .length;
+    },
+    dailyDepositAmount() {
+      if (!this.filters.summaryDate) return 0;
+      return this.transactions
+        .filter(t => t.date === this.filters.summaryDate && t.type === 'Deposit')
+        .reduce((sum, t) => sum + t.amount, 0);
+    },
+    dailyWithdrawalCount() {
+      if (!this.filters.summaryDate) return 0;
+      return this.transactions
+        .filter(t => t.date === this.filters.summaryDate && t.type === 'Withdrawal')
+        .length;
+    },
+    dailyWithdrawalAmount() {
+      if (!this.filters.summaryDate) return 0;
+      return this.transactions
+        .filter(t => t.date === this.filters.summaryDate && t.type === 'Withdrawal')
+        .reduce((sum, t) => sum + t.amount, 0);
+    },
+    dailyNetCash() {
+      return this.dailyDepositAmount - this.dailyWithdrawalAmount;
+    },
   },
   methods: {
     applyFilters() {
@@ -262,6 +333,7 @@ export default {
       start.setDate(end.getDate() - 30);
       this.filters.startDate = start.toISOString().split('T')[0];
       this.filters.endDate = end.toISOString().split('T')[0];
+      this.filters.summaryDate = end.toISOString().split('T')[0]; // Set default summary date
     },
   },
   mounted() {
